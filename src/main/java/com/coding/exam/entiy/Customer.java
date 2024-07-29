@@ -1,11 +1,10 @@
 package com.coding.exam.entiy;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Entity
 @Getter
@@ -20,5 +19,8 @@ public class Customer {
     private String customerEmail;
     private String address1;
     private String address2;
+
+    @OneToMany(mappedBy = "customer")
+    private List<SavingsAccount> savings;
 
 }

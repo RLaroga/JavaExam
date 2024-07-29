@@ -1,190 +1,72 @@
 package com.coding.exam.service.impl;
 
+import com.coding.exam.dto.CustomerResponseDTO;
+import com.coding.exam.dto.SavingsAccountDTO;
 import com.coding.exam.entiy.Customer;
 import com.coding.exam.request.CustomerRequest;
 import com.coding.exam.response.CustomerResponse;
+import com.coding.exam.response.ErrorResponse;
+import com.coding.exam.respository.CustomerRepository;
 import com.coding.exam.service.CustomerService;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.FluentQuery;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
 
-    @Override
-    public CustomerResponse saveCustomer(CustomerRequest customerRequest) {
+    private final CustomerRepository customerRepository;
 
+    @Override
+    public ResponseEntity<?> createCustomer(CustomerRequest customerRequest) {
+        if (customerRequest.getCustomerEmail() == null || customerRequest.getCustomerEmail().isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(400, "Email is required field"));
+        }
+        Customer savedCustomer = this.saveCustomer(customerRequest);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new CustomerResponse(savedCustomer.getId(), 201, "Customer account created"));
+    }
+
+    @Override
+    public CustomerResponseDTO getCustomerResponseById(Long id) {
+        Optional<Customer> customer = customerRepository.findById(id);
+
+        if (customer.isPresent()) {
+            Customer c = customer.get();
+            List<SavingsAccountDTO> savingsDTOs = c.getSavings().stream()
+                    .map(sa -> new SavingsAccountDTO(sa.getAccountNumber(), sa.getAccountType(), sa.getAvailableBalance()))
+                    .collect(Collectors.toList());
+            return new CustomerResponseDTO(
+                    c.getId(),
+                    c.getCustomerName(),
+                    c.getCustomerMobile(),
+                    c.getCustomerEmail(),
+                    c.getAddress1(),
+                    c.getAddress2(),
+                    savingsDTOs,
+                    302,
+                    "Customer Account found"
+            );
+        }
+        return new CustomerResponseDTO(null, null, null, null, null, null, null, 401, "Customer not found");
+    }
+
+    private Customer saveCustomer(CustomerRequest customerRequest) {
         Customer customer = new Customer();
         customer.setCustomerName(customerRequest.getCustomerName());
         customer.setCustomerMobile(customerRequest.getCustomerMobile());
         customer.setCustomerEmail(customerRequest.getCustomerEmail());
         customer.setAddress1(customerRequest.getAddress1());
         customer.setAddress2(customerRequest.getAddress2());
-        Customer savedCustomer = this.save(customer);
-
-        CustomerResponse response = new CustomerResponse();
-        response.setCustomerNumber(savedCustomer.getId());
-        response.setTransactionStatusCode(HttpStatus.CREATED.value());
-        response.setTransactionStatusDescription("Customer account created");
-
-        return response;
-    }
-
-    @Override
-    public void flush() {
-
-    }
-
-    @Override
-    public <S extends Customer> S saveAndFlush(S entity) {
-        return null;
-    }
-
-    @Override
-    public <S extends Customer> List<S> saveAllAndFlush(Iterable<S> entities) {
-        return List.of();
-    }
-
-    @Override
-    public void deleteAllInBatch(Iterable<Customer> entities) {
-
-    }
-
-    @Override
-    public void deleteAllByIdInBatch(Iterable<Long> longs) {
-
-    }
-
-    @Override
-    public void deleteAllInBatch() {
-
-    }
-
-    @Override
-    public Customer getOne(Long aLong) {
-        return null;
-    }
-
-    @Override
-    public Customer getById(Long aLong) {
-        return null;
-    }
-
-    @Override
-    public Customer getReferenceById(Long aLong) {
-        return null;
-    }
-
-    @Override
-    public <S extends Customer> Optional<S> findOne(Example<S> example) {
-        return Optional.empty();
-    }
-
-    @Override
-    public <S extends Customer> List<S> findAll(Example<S> example) {
-        return List.of();
-    }
-
-    @Override
-    public <S extends Customer> List<S> findAll(Example<S> example, Sort sort) {
-        return List.of();
-    }
-
-    @Override
-    public <S extends Customer> Page<S> findAll(Example<S> example, Pageable pageable) {
-        return null;
-    }
-
-    @Override
-    public <S extends Customer> long count(Example<S> example) {
-        return 0;
-    }
-
-    @Override
-    public <S extends Customer> boolean exists(Example<S> example) {
-        return false;
-    }
-
-    @Override
-    public <S extends Customer, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
-        return null;
-    }
-
-    @Override
-    public <S extends Customer> S save(S entity) {
-        return null;
-    }
-
-    @Override
-    public <S extends Customer> List<S> saveAll(Iterable<S> entities) {
-        return List.of();
-    }
-
-    @Override
-    public Optional<Customer> findById(Long aLong) {
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean existsById(Long aLong) {
-        return false;
-    }
-
-    @Override
-    public List<Customer> findAll() {
-        return List.of();
-    }
-
-    @Override
-    public List<Customer> findAllById(Iterable<Long> longs) {
-        return List.of();
-    }
-
-    @Override
-    public long count() {
-        return 0;
-    }
-
-    @Override
-    public void deleteById(Long aLong) {
-
-    }
-
-    @Override
-    public void delete(Customer entity) {
-
-    }
-
-    @Override
-    public void deleteAllById(Iterable<? extends Long> longs) {
-
-    }
-
-    @Override
-    public void deleteAll(Iterable<? extends Customer> entities) {
-
-    }
-
-    @Override
-    public void deleteAll() {
-
-    }
-
-    @Override
-    public List<Customer> findAll(Sort sort) {
-        return List.of();
-    }
-
-    @Override
-    public Page<Customer> findAll(Pageable pageable) {
-        return null;
+        return customerRepository.save(customer);
     }
 }
